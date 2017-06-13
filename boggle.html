@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<meta charset="utf-8"/>
+<head>
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+	<script src="js/dictionary.js"></script>
+	<script src="js/trie.js"></script>
+	<link rel="stylesheet" href="css/style.css">
+</head>
+<body onload="startGame()">
+	<div class="container">
+		<div class="row">
+			<div class="col-xs-6">
+				<h2>Boggle</h2>
+			</div>
+			<div class="col-xs-6">
+				<h4 id="timer"></h4>
+				<h4 id="score">Score: 0</h4>
+			</div>
+		</div>
+
+		<div class="row">
+			<div class="col-xs-8">
+				<table class="table" id="board" >
+					<tr>
+						<td><div id="cell_00" class="content" onclick="selectTile(this)" onmouseover="mouseOver(this)" onmouseout="mouseOut(this)"></div></td>
+						<td><div id="cell_01" class="content" onclick="selectTile(this)" onmouseover="mouseOver(this)" onmouseout="mouseOut(this)"></div></td>
+						<td><div id="cell_02" class="content" onclick="selectTile(this)" onmouseover="mouseOver(this)" onmouseout="mouseOut(this)"></div></td>
+						<td><div id="cell_03" class="content" onclick="selectTile(this)" onmouseover="mouseOver(this)" onmouseout="mouseOut(this)"></div></td>
+					</tr>
+					<tr>
+						<td><div id="cell_10" class="content" onclick="selectTile(this)" onmouseover="mouseOver(this)" onmouseout="mouseOut(this)"></div></td>
+						<td><div id="cell_11" class="content" onclick="selectTile(this)" onmouseover="mouseOver(this)" onmouseout="mouseOut(this)"></div></td>
+						<td><div id="cell_12" class="content" onclick="selectTile(this)" onmouseover="mouseOver(this)" onmouseout="mouseOut(this)"></div></td>
+						<td><div id="cell_13" class="content" onclick="selectTile(this)" onmouseover="mouseOver(this)" onmouseout="mouseOut(this)"></div></td>
+					</tr>
+					<tr>
+						<td><div id="cell_20" class="content" onclick="selectTile(this)" onmouseover="mouseOver(this)" onmouseout="mouseOut(this)"></div></td>
+						<td><div id="cell_21" class="content" onclick="selectTile(this)" onmouseover="mouseOver(this)" onmouseout="mouseOut(this)"></div></td>
+						<td><div id="cell_22" class="content" onclick="selectTile(this)" onmouseover="mouseOver(this)" onmouseout="mouseOut(this)"></div></td>
+						<td><div id="cell_23" class="content" onclick="selectTile(this)" onmouseover="mouseOver(this)" onmouseout="mouseOut(this)"></div></td>
+					</tr>
+					<tr>
+						<td><div id="cell_30" class="content" onclick="selectTile(this)" onmouseover="mouseOver(this)" onmouseout="mouseOut(this)"></div></td>
+						<td><div id="cell_31" class="content" onclick="selectTile(this)" onmouseover="mouseOver(this)" onmouseout="mouseOut(this)"></div></td>
+						<td><div id="cell_32" class="content" onclick="selectTile(this)" onmouseover="mouseOver(this)" onmouseout="mouseOut(this)"></div></td>
+						<td><div id="cell_33" class="content" onclick="selectTile(this)" onmouseover="mouseOver(this)" onmouseout="mouseOut(this)"></div></td>
+					</tr>
+				</table>
+			</div>
+		</div>
+		<br>
+		<div class="row">
+			<div class="col-xs-6">
+				<form class="form-inline">
+					<div class="form-group">
+						<label for="boogleInput">Word: </label>
+						<input class="form-control" id="boogleInput" type="text">
+						<button type="button" class="btn btn-primary btn-md" id="submitButton">Submit</button>
+						<button type="button" class="btn btn-primary btn-md" id="clearButton">Clear</button>
+					</div>
+				</form>
+			</div>
+			<div class="col-xs-6">
+				<button type="button" class="btn btn-success btn-md" id="restartButton">Restart</button>
+				<button type="button" class="btn btn-info btn-md" id="quitButton">Quit</button>
+			</div>
+		</div>
+		<br>
+		<div class="row">
+			<div class="col-xs-6">
+			    <p>Most recent search word: <span id="searchWord"></span></p>
+			    <p>Most recent search time: <span id="searchTime"></span></p>
+		    </div>
+		</div>
+		<br>
+		<div class="row">
+			<div class="col-xs-6">
+			    <label for="scoredWords">Scored words:</label>
+			    <textarea class="form-control" rows="3" id="scoredWords" readonly></textarea>
+		    </div>
+		</div>
+	</div>
+
+	<!-- Game Over Pop Window -->
+	<div class="modal fade" id="myModal" role="dialog">
+		<div class="modal-dialog modal-sm">
+			<div class="modal-content">
+				<div class="modal-header">
+					<button type="button" class="close" data-dismiss="modal">&times;</button>
+					<h4 class="modal-title text-center">Game Over</h4>
+				</div>
+				<div class="modal-body">
+					<p class="text-center" id="finalScore" align="center"></p>
+				</div>
+			</div>
+
+		</div>
+	</div>
+
+	<div id="alert-success" class="alert alert-success alert-dismissible" role="alert">
+		<strong>Bingo! Correct word!</strong>
+	</div>
+
+	<div id="alert-fail" class="alert alert-danger alert-dismissible" role="alert">
+		<strong id=failMessage>Incorrect word!</strong>
+	</div>
+
+	<script>
+	'use strict'
+	var count = 60;
+	var score = 0;
+
+	function startGame() {
+		drawBoard();
+		timedCount();
+		initializa();
+	}
+
+	function initializa(){
+		$("#boogleInput").val("");
+		$("#restartButton").hide();
+		$("#alert-success").hide();
+		$("#alert-fail").hide();
+		$("#boogleInput").removeAttr("disabled")
+		$("#submitButton").removeAttr("disabled");
+		$("#clearButton").removeAttr("disabled");
+		$("#quitButton").removeAttr("disabled");
+		$("#restartButton").removeAttr("disabled");
+	}
+
+	function timedCount() {
+		$("#timer").html("Time: " + count + " s");
+		if(count <= 10){
+			$("#timer").css("color", "red");
+		}
+		if(count == 59) {
+			// load trie after render
+			Trie.init(dictionary);
+		}
+		if(count > 0){
+			count = count - 1;
+			setTimeout(function(){ timedCount() }, 1000);
+		}
+		else{
+			gameOver();
+		}
+	}
+
+	function gameOver(){
+		count = 0;
+		$("#boogleInput").val("");
+		$("#finalScore").html("Your score: " + score);
+		$("#boogleInput").attr("disabled", "true");
+		$("#submitButton").attr("disabled", "true");
+		$("#clearButton").attr("disabled", "true");
+		$("#quitButton").attr("disabled", "true");
+		$("#quitButton").hide();
+		$("#restartButton").show();
+		$("#myModal").modal();
+	}
+
+	// Load tiles from txt file
+	var board;
+	$.get('TestBoard.txt', function(text) {
+		board = text.split(",");
+	}, 'text');
+
+	var letterDict = {}; // count the amount of letters & wildcards on the board
+	var tmpLetterDict  = {}; // refresh after every submit
+	function drawBoard() {
+		var index = 0;
+		var pre = "cell_";
+		for (var i = 0; i < 4; i++) {
+			var cell_id = null;
+			for (var j = 0; j < 4; j++) {
+				var letter = board[index];
+				cell_id = pre + "" + i + "" + j;
+				$("#"+cell_id).html(letter);
+
+				if(index == 0) {
+					if(letterDict[letter.charAt(0)] === undefined){
+						letterDict[letter.charAt(0)] = 1;
+					}
+					else{
+						letterDict[letter.charAt(0)] = letterDict[letter.charAt(0)] + 1;
+					}
+				}
+				else{
+					if(letterDict[letter.charAt(1)] === undefined){
+						letterDict[letter.charAt(1)] = 1;
+					}
+					else{
+						letterDict[letter.charAt(1)] = letterDict[letter.charAt(1)] + 1;
+					}
+				}
+				index++;
+			}
+		}
+	}
+
+	$("#clearButton").click(function(){
+		$("#boogleInput").val("");
+		for(var cell_id in selectedDict){
+			$("#"+cell_id).css('background', '#4679BD');
+		}
+		selectedDict = {};
+	});
+
+	$("#submitButton").click(function(){
+		validateWord($("#boogleInput").val());
+	});
+	
+	$("#quitButton").click(function(){
+		gameOver();
+	});
+
+	$("#restartButton" ).click(function() {
+		location.reload();
+	});
+
+	var selectedDict = {};
+	function selectTile(cell) {
+		if(count > 0){
+			var id = cell.id;
+	      	// prevent duplicate tile selection
+	      	if(selectedDict[cell.id] == true){
+				showFailAlert("This cell is already selected. Please select another one.");
+	      	}
+	      	else{
+				// selected tile
+	      		$("#"+cell.id).css('background', '#334499');
+	      		selectedDict[cell.id] = true;
+	      		var currentInput = $("#boogleInput").val();
+	      		var newInput = currentInput + cell.innerHTML;
+	      		var finalInput = "";
+	      		var tmp = newInput.split(" ");
+	      		for(var i=0; i<tmp.length; i++){
+	      			finalInput = finalInput + tmp[i];
+	      		}
+	      		$("#boogleInput").val(finalInput);
+	      	}
+	  	}
+	}
+
+	var wildcardPostions = [];
+
+	function validateWord(word){
+		if(word.length === 0){
+			showFailAlert("Invalid input! Please enter or select letter.");
+		}
+		else if(word.length > 16){
+			showFailAlert("Invalid input! You entered more than 16 letters.");
+		}
+		else{
+			// Verify input word includes only letters and wildcard
+	    	var regex = /^[a-zA-Z*]+$/;
+	     	if(regex.test(word)){
+				tmpLetterDict = Object.assign({}, letterDict);
+	     		// Verify input word letter amount with the board
+	     		
+	     		for (var i=0; i<word.length; i++){
+	     			var wordChar = word.charAt(i);
+	     			if(wordChar !== "*"){ 
+	     				wordChar = wordChar.toUpperCase();
+	     			}
+	     			else{
+						wildcardPostions.push(i);
+	     			}
+				    
+				    if(tmpLetterDict[wordChar] === undefined){
+				    	showFailAlert("Incorrect! The word has letter '" + wordChar + "'' that is not on the board!");
+				    }
+				    else{
+				    	if(tmpLetterDict[wordChar] > 0) {
+				    		tmpLetterDict[wordChar] = tmpLetterDict[wordChar] - 1;
+				    	}
+				    	else{
+				    		showFailAlert("Incorrect! The word has more '" + wordChar + "'' than on the board");
+				    	}
+				    }
+				}
+
+				if(wildcardPostions.length === 0){
+					checkDictionary(word);
+				}
+				else{
+					checkDictionaryWithWildcard(word, wildcardPostions);	
+				}
+			}
+			else{
+				showFailAlert("Invalid input! Only letters on the board and wildcard are allowed.");
+			}
+		}
+	}
+	// prevent duplicate submits
+	var submittedWords = {};
+
+	function checkDictionary(word){
+		var startTime = (new Date()).getTime();
+		console.log("Checking '" + word + "' with dictionary...");
+		if(submittedWords.length > 0){
+			for(var submittedWord in submittedWords){
+				if(word !== submittedWord){
+					searchDictionary(word);
+				}
+			}
+		}
+		else{
+			searchDictionary(word);
+		}
+		var searchTime = (new Date()).getTime() - startTime;
+		$("#searchTime").html(searchTime + "ms");
+		$("#searchWord").html(word);
+		console.log("Searching time: " + searchTime + "ms");
+	}
+
+	function searchDictionary(word){
+		var startTime = (new Date()).getTime();
+		var results = Trie.searchWord(word.toLowerCase(), 0);
+		var searchTime = (new Date()).getTime() - startTime;
+		if(results.length > 0){
+			for (var i = 0; i < results.length; i++) {
+				if(submittedWords[results[i]] === undefined){
+					submittedWords[results[i]] = true;
+					score++;
+					$("#score").html("Score: " + score);
+					$("#scoredWords").html($("#scoredWords").text() + " " + word);
+					showSuccessAlert();
+				}else{
+					showFailAlert("Incorrect! This word has been submitted already!");
+				}
+			}
+		}
+		else{
+			showFailAlert("Incorrect! This word does not exit in the dictionary!");
+		}
+	}
+
+	var newWords = [];
+	function checkDictionaryWithWildcard(word, wildcardPostions){
+		var startTime = (new Date()).getTime();
+		// console.log("Checking '" + word + "' with dictionary...");
+		for(var i=0; i<wildcardPostions.length; i++){
+			checkDictionaryWithWildcardHelper(word, wildcardPostions);		
+		}
+
+		for(var i=0; i<newWords.length; i++){
+			// filter out the ones with wildcard
+			var regex = /^[a-zA-Z]+$/;
+	     	if(regex.test(newWords[i])){
+	     		searchDictionary(newWords[i]);
+	     	}
+		}
+		var searchTime = (new Date()).getTime() - startTime;
+		$("#searchWord").html(word);
+		$("#searchTime").html(searchTime + "ms");
+		console.log("Wildcard searching time: " + searchTime + "ms");
+	}
+
+	function checkDictionaryWithWildcardHelper(word,  wildcardPostions){
+		for(var i=0; i<wildcardPostions.length; i++){
+			var newWordLeft = word.substring(0, wildcardPostions[i]);
+			var newWordRight = word.substring(wildcardPostions[i] + 1, word.length);
+			for(var i=65; i<91; i++){
+				var tmp = String.fromCharCode(i);
+				var newWord = newWordLeft + tmp + newWordRight;
+				newWords.push(newWord);
+				// console.log("newWords:" + newWord);
+				// remove the most recent wildcard position just used
+				checkDictionaryWithWildcardHelper(newWord, wildcardPostions.slice(1, wildcardPostions.length));
+			}
+		}
+	}
+
+	function mouseOver(item) {
+		$("#"+item.id).fadeTo( "fast" , 0.7, function() {});
+	}
+
+	function mouseOut(item) {
+		$("#"+item.id).fadeTo( "fast" , 1.0, function() {});
+	}
+
+	function showSuccessAlert(){
+		$("#alert-success").show();
+		$("#alert-success").alert();
+		window.setTimeout(function() { 
+			$("#alert-success").hide();
+		}, 4000);
+	}
+
+	function showFailAlert(message){
+		$("#alert-fail").show();
+		$("#alert-fail").alert();
+		$("#failMessage").html(message);
+		window.setTimeout(function() { 
+			$("#alert-fail").hide();
+		}, 4000);
+	}
+</script>
+</body>
+</html>
